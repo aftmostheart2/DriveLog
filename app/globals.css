@@ -458,14 +458,14 @@ p, small {
 
 .garageCard {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr;
   padding: 0;
   text-align: left;
   overflow: hidden;
 }
-.garageCard .vehicleArt { min-height: 126px; }
-.garageCard div:last-child { padding: 14px 14px 14px 0; }
+.garageCard .vehicleArt { min-height: 138px; }
+.garageCard div:last-child { padding: 14px; min-width: 0; }
+.garageCard h2, .garageCard p { overflow-wrap: anywhere; }
 .garageCard.selected { border-color: rgba(255, 106, 42, .55); }
 .plate {
   display: inline-block;
@@ -911,9 +911,7 @@ textarea { min-height: 98px; resize: vertical; }
 @media (max-width: 380px) {
   .grid3 { grid-template-columns: 1fr; }
   .profileGrid, .grid2, .moreGrid, .formGrid { grid-template-columns: 1fr; }
-  .garageCard { grid-template-columns: 1fr; }
-  .garageCard div:last-child { padding: 14px; }
-}
+ }
 .accountBox {
   display: grid;
   gap: 10px;
@@ -988,3 +986,11 @@ textarea { min-height: 98px; resize: vertical; }
   opacity: .42;
   cursor: not-allowed;
 }
+
+.fuelCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fuelCard > div { min-width: 0; }
+.fuelCard > strong { color: var(--text); font-size: 16px; }

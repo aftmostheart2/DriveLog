@@ -6,7 +6,8 @@ export type CarKeepTable =
   | "reminders"
   | "parts"
   | "projects"
-  | "wishlist_items";
+  | "wishlist_items"
+  | "fuel_entries";
 
 export type SyncRecord = {
   id: string;

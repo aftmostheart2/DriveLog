@@ -52,7 +52,7 @@ export async function deleteCloudVehicleData(vehicleId: string) {
   const userId = await getCurrentUserId();
   if (!userId) return { error: new Error("Sign in before clearing cloud data.") };
 
-  const relatedTables: CarKeepTable[] = ["services", "reminders", "parts", "projects", "wishlist_items"];
+  const relatedTables: CarKeepTable[] = ["services", "reminders", "parts", "projects", "wishlist_items", "fuel_entries"];
   for (const table of relatedTables) {
     const { error } = await supabase
       .from(table)
