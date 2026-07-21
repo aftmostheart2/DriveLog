@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase/client";
 import { upsertRecord } from "../lib/supabase/storage";
 
@@ -14,13 +14,64 @@ type WishlistItem = { id: string; vehicleId: string; name: string; estimate: num
 type AppData = { vehicles: Vehicle[]; services: Service[]; reminders: Reminder[]; parts: Part[]; projects: Project[]; wishlist: WishlistItem[]; };
 type ModalType = "vehicle" | "service" | "part" | "project" | "reminder" | "wishlist" | "backup";
 type AccountState = { email: string; signedIn: boolean; message: string; };
+type BackupPayload = { exportedAt?: string; app?: string; version?: number; data?: Partial<AppData> };
 
 const emptyData: AppData = { vehicles: [], services: [], reminders: [], parts: [], projects: [], wishlist: [] };
 const STORAGE_KEY = "carkeep.v1";
 const uid = () => typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
 const money = (n: number) => Number.isFinite(n) ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "$0";
 const serviceTotal = (service: Service) => service.partsCost + service.laborCost;
+const authRedirectUrl = () => {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  if (typeof window === "undefined") return undefined;
+  return window.location.origin;
+};
 const backupName = () => `carkeep-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+
+function normalizeBackup(raw: unknown): AppData | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as BackupPayload | Partial<AppData>;
+  const candidate = "data" in payload && payload.data ? payload.data : payload;
+  const data = candidate as Partial<AppData>;
+  const keys: (keyof AppData)[] = ["vehicles", "services", "reminders", "parts", "projects", "wishlist"];
+  if (!keys.every((key) => Array.isArray(data[key]))) return null;
+  return {
+    vehicles: data.vehicles as Vehicle[],
+    services: data.services as Service[],
+    reminders: data.reminders as Reminder[],
+    parts: data.parts as Part[],
+    projects: data.projects as Project[],
+    wishlist: data.wishlist as WishlistItem[],
+  };
+}
+
+function mergeById<T extends { id: string }>(current: T[], incoming: T[]) {
+  const merged = new Map(current.map((item) => [item.id, item]));
+  incoming.forEach((item) => merged.set(item.id || uid(), item));
+  return Array.from(merged.values());
+}
+
+function mergeBackup(current: AppData, incoming: AppData): AppData {
+  return {
+    vehicles: mergeById(current.vehicles, incoming.vehicles),
+    services: mergeById(current.services, incoming.services),
+    reminders: mergeById(current.reminders, incoming.reminders),
+    parts: mergeById(current.parts, incoming.parts),
+    projects: mergeById(current.projects, incoming.projects),
+    wishlist: mergeById(current.wishlist, incoming.wishlist),
+  };
+}
+
+async function readBackupFile(file: File) {
+  if (!file.name.toLowerCase().endsWith(".json")) throw new Error("Choose a CarKeep JSON backup file.");
+  const text = await file.text();
+  const parsed = JSON.parse(text) as unknown;
+  const backup = normalizeBackup(parsed);
+  if (!backup) throw new Error("That file does not look like a CarKeep backup.");
+  return backup;
+}
 
 async function saveBackupToFile(data: AppData) {
   const payload = JSON.stringify({ exportedAt: new Date().toISOString(), app: "CarKeep", version: 1, data }, null, 2);
@@ -114,7 +165,7 @@ export default function Home() {
     if (!supabase) return setAccount((current) => ({ ...current, message: "Add Supabase env vars first." }));
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: authRedirectUrl() },
     });
     setAccount((current) => ({ ...current, email, message: error ? error.message : "Check your email for the sign-in link." }));
   }
@@ -126,6 +177,16 @@ export default function Home() {
   async function exportBackup() {
     const message = await saveBackupToFile(data);
     setToast(message);
+  }
+  async function importBackup(file: File, mode: "replace" | "merge") {
+    try {
+      const backup = await readBackupFile(file);
+      setData((current) => mode === "replace" ? backup : mergeBackup(current, backup));
+      setVehicleId(backup.vehicles[0]?.id ?? "");
+      setToast(mode === "replace" ? "Backup restored" : "Backup merged");
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "Could not import backup");
+    }
   }
   async function syncToSupabase() {
     if (!supabase || !account.signedIn) return setToast("Sign in before syncing");
@@ -173,7 +234,7 @@ export default function Home() {
     if (screen === "projects") return <Projects data={data} openDetail={setProjectDetail} onAdd={() => setModal("project")} />;
     if (screen === "wishlist") return <Wishlist data={data} setData={setData} onAdd={() => setModal("wishlist")} />;
     if (screen === "reminders") return <Reminders data={data} onAdd={() => setModal("reminder")} />;
-    if (screen === "settings") return <Settings data={data} account={account} onSignIn={signInWithEmail} onSignOut={signOut} onSync={syncToSupabase} onBackup={exportBackup} onClear={() => { repository.clear(); setData(emptyData); setVehicleId(""); setToast("Local data cleared"); }} />;
+    if (screen === "settings") return <Settings data={data} account={account} onSignIn={signInWithEmail} onSignOut={signOut} onSync={syncToSupabase} onBackup={exportBackup} onImport={importBackup} onClear={() => { repository.clear(); setData(emptyData); setVehicleId(""); setToast("Local data cleared"); }} />;
     if (screen === "more") return <More setScreen={setScreen} />;
     return <Dashboard data={data} vehicle={vehicle} allSpend={allSpend} vehicleSpend={vehicleSpend} setScreen={setScreen} setVehicleId={setVehicleId} onQuickAdd={() => setModal("service")} onAddVehicle={() => setModal("vehicle")} />;
   }, [screen, hasVehicles, vehicles, vehicle, services, data, filteredServices, query, allSpend, vehicleSpend, account]);
@@ -196,10 +257,18 @@ function Parts({ data, setData, onAdd }: { data: AppData; setData: React.Dispatc
 function Projects({ data, openDetail, onAdd }: { data: AppData; openDetail: (id: string) => void; onAdd: () => void }) { return <div className="stack"><button className="primary" onClick={onAdd}>Create project</button>{data.projects.length ? data.projects.map((project) => <button className="projectCard" key={project.id} onClick={() => openDetail(project.id)}><div><span className={`badge ${project.priority.toLowerCase()}`}>{project.priority}</span><h2>{project.name}</h2><p>{project.description || "No description"}</p></div><Progress project={project} /><small>{project.status}{project.targetDate ? " · target " + project.targetDate : ""}</small></button>) : <EmptyState title="No projects" text="Plan repairs, modifications, parts, budget, and install tasks here." />}</div>; }
 function Wishlist({ data, setData, onAdd }: { data: AppData; setData: React.Dispatch<React.SetStateAction<AppData>>; onAdd: () => void }) { return <div className="stack"><button className="primary" onClick={onAdd}>Add wishlist item</button>{data.wishlist.length ? data.wishlist.map((item) => { const best = Math.min(...item.retailers.map((retailer) => retailer.price)); return <article className="card" key={item.id}><span className={`badge ${item.priority.toLowerCase()}`}>{item.priority}</span><h2>{item.name}</h2><p>{data.vehicles.find((vehicle) => vehicle.id === item.vehicleId)?.nickname} · est. {money(item.estimate)}</p><div className="retailers">{item.retailers.map((retailer) => <span key={retailer.name}>{retailer.name} <b>{money(retailer.price)}</b>{retailer.price === best && <em>Best</em>}</span>)}</div><button onClick={() => setData((current) => ({ ...current, parts: [{ id: uid(), vehicleId: item.vehicleId, name: item.name, category: "Wishlist purchase", price: best, purchaseDate: new Date().toISOString().slice(0, 10), retailer: item.retailers.find((retailer) => retailer.price === best)?.name ?? "Retailer", order: "", warranty: "", installed: false, link: "", notes: item.notes }, ...current.parts], wishlist: current.wishlist.filter((wishlistItem) => wishlistItem.id !== item.id) }))}>Move to purchased parts</button></article>; }) : <EmptyState title="No wishlist items" text="Compare future parts and prices before you buy." />}</div>; }
 function Reminders({ data, onAdd }: { data: AppData; onAdd: () => void }) { return <div className="stack"><button className="primary" onClick={onAdd}>Add reminder</button>{data.reminders.length ? data.reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} vehicle={data.vehicles.find((vehicle) => vehicle.id === reminder.vehicleId)} />) : <EmptyState title="No reminders" text="Create mileage or date reminders for service before it sneaks up." />}</div>; }
-function Settings({ data, account, onSignIn, onSignOut, onSync, onBackup, onClear }: { data: AppData; account: AccountState; onSignIn: (email: string) => void; onSignOut: () => void; onSync: () => void; onBackup: () => void; onClear: () => void }) {
+function Settings({ data, account, onSignIn, onSignOut, onSync, onBackup, onImport, onClear }: { data: AppData; account: AccountState; onSignIn: (email: string) => void; onSignOut: () => void; onSync: () => void; onBackup: () => void; onImport: (file: File, mode: "replace" | "merge") => void; onClear: () => void }) {
   const [email, setEmail] = useState(account.email);
+  const fileInput = useRef<HTMLInputElement>(null);
   const recordCount = data.vehicles.length + data.services.length + data.parts.length + data.projects.length + data.reminders.length + data.wishlist.length;
-  return <div className="stack"><div className="card"><h2>Account</h2><p>{isSupabaseConfigured ? "Sign in with an email magic link to sync your records to Supabase." : "Supabase is not configured yet. Add the env vars in Vercel to enable login."}</p><div className="accountBox">{account.signedIn ? <><strong>{account.email}</strong><button onClick={onSignOut}>Sign out</button></> : <><input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" type="email" /><button onClick={() => onSignIn(email)}>Email sign-in link</button></>}{account.message && <small>{account.message}</small>}</div></div><div className="card"><h2>Data</h2><p>CarKeep saves locally first. Supabase sync is optional until your account is connected.</p><div className="grid2"><Stat label="Records" value={String(recordCount)} /><Stat label="Storage" value={account.signedIn ? "Local + cloud" : "Local"} /></div></div><button className="primary" onClick={onSync}>Sync to Supabase</button><button className="primary" onClick={onBackup}>Export JSON backup</button><button className="danger" onClick={onClear}>Delete local data</button></div>;
+  function chooseBackup(mode: "replace" | "merge") {
+    const input = fileInput.current;
+    if (!input) return;
+    input.dataset.mode = mode;
+    input.value = "";
+    input.click();
+  }
+  return <div className="stack"><div className="card"><h2>Account</h2><p>{isSupabaseConfigured ? "Sign in with an email magic link to sync your records to Supabase." : "Supabase is not configured yet. Add the env vars in Vercel to enable login."}</p><div className="accountBox">{account.signedIn ? <><strong>{account.email}</strong><button onClick={onSignOut}>Sign out</button></> : <><input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" type="email" /><button onClick={() => onSignIn(email)}>Email sign-in link</button></>}{account.message && <small>{account.message}</small>}</div></div><div className="card"><h2>Data</h2><p>CarKeep saves locally first. Export a JSON backup to Files, then import it later if you change phones, clear Safari data, or reinstall.</p><div className="grid2"><Stat label="Records" value={String(recordCount)} /><Stat label="Storage" value={account.signedIn ? "Local + cloud" : "Local"} /></div></div><button className="primary" onClick={onSync}>Sync to Supabase</button><button className="primary" onClick={onBackup}>Export JSON backup</button><div className="backupActions"><button onClick={() => chooseBackup("merge")}>Import and merge</button><button onClick={() => { if (confirm("Replace everything in CarKeep with this backup?")) chooseBackup("replace"); }}>Import and replace</button></div><input ref={fileInput} className="hiddenFile" type="file" accept="application/json,.json" onChange={(event) => { const file = event.currentTarget.files?.[0]; const mode = event.currentTarget.dataset.mode === "replace" ? "replace" : "merge"; if (file) onImport(file, mode); }} /><button className="danger" onClick={onClear}>Delete local data</button></div>;
 }
 function More({ setScreen }: { setScreen: (screen: string) => void }) { return <div className="moreGrid">{moreScreens.map(([key, title, sub]) => <button key={key} onClick={() => setScreen(key)}><strong>{title}</strong><span>{sub}</span></button>)}</div>; }
 function ProjectDetail({ project, data, onClose, onComplete }: { project: Project; data: AppData; onClose: () => void; onComplete: (project: Project) => void }) { const vehicle = data.vehicles.find((item) => item.id === project.vehicleId)!; const parts = data.parts.filter((part) => part.projectId === project.id); return <div className="overlay" role="dialog" aria-modal="true"><div className="sheet"><button className="close" onClick={onClose}>×</button><span className={`badge ${project.priority.toLowerCase()}`}>{project.priority}</span><h2>{project.name}</h2><p>{vehicle.nickname} · {project.status}</p><Progress project={project} /><p>{project.description}</p><div className="checklist">{project.tasks.length ? project.tasks.map((task) => <label key={task.label}><input type="checkbox" checked={task.done} readOnly /> {task.label}</label>) : <p>No checklist tasks yet.</p>}</div><Section title="Linked purchased parts">{parts.length ? parts.map((part) => <PartCard key={part.id} part={part} vehicle={vehicle} />) : <EmptyState title="No linked parts" text="Purchased parts linked to this project will appear here." />}</Section><button className="primary" onClick={() => onComplete(project)}>Convert project to service entry</button></div></div>; }

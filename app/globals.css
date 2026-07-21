@@ -918,3 +918,27 @@ textarea { min-height: 98px; resize: vertical; }
   display: block;
   color: var(--text);
 }
+
+.backupActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.backupActions button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 13px;
+  padding: 0 12px;
+  font-weight: 900;
+}
+.hiddenFile {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+@media (max-width: 380px) {
+  .backupActions { grid-template-columns: 1fr; }
+}
