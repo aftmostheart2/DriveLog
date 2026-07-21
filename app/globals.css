@@ -158,11 +158,11 @@ p, small {
 .carShape {
   position: absolute;
   right: 18px;
-  bottom: 18px;
-  width: 122px;
-  height: 44px;
-  color: rgba(255, 255, 255, .82);
-  filter: drop-shadow(0 8px 12px rgba(0,0,0,.35));
+  bottom: 16px;
+  width: 132px;
+  height: 54px;
+  color: rgba(255, 255, 255, .86);
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .38));
 }
 .carShape::before, .carShape::after {
   content: "";
@@ -170,73 +170,105 @@ p, small {
   display: block;
 }
 .carShape::before {
-  left: 14px;
-  right: 12px;
-  bottom: 10px;
-  height: 24px;
-  border: 2px solid currentColor;
-  border-radius: 30px 36px 12px 12px;
-  background: rgba(0,0,0,.18);
+  left: 8px;
+  right: 8px;
+  bottom: 13px;
+  height: 31px;
+  background:
+    linear-gradient(115deg, transparent 0 24%, rgba(9, 10, 12, .52) 24% 39%, transparent 39% 100%),
+    currentColor;
+  border-radius: 46px 54px 15px 15px;
+  clip-path: polygon(0 55%, 12% 38%, 30% 18%, 64% 18%, 78% 39%, 96% 43%, 100% 57%, 96% 100%, 4% 100%);
 }
 .carShape::after {
-  left: 29px;
-  bottom: 2px;
-  width: 16px;
-  height: 16px;
+  left: 28px;
+  bottom: 4px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #090a0c;
-  box-shadow: 58px 0 0 #090a0c, 0 0 0 3px currentColor, 58px 0 0 3px currentColor;
+  background: #07080a;
+  box-shadow:
+    62px 0 0 #07080a,
+    0 0 0 4px currentColor,
+    62px 0 0 4px currentColor,
+    0 0 0 6px rgba(7, 8, 10, .28),
+    62px 0 0 6px rgba(7, 8, 10, .28);
 }
-.shape-coupe .carShape::before { left: 20px; right: 18px; height: 20px; border-radius: 44px 52px 12px 12px; transform: skewX(-10deg); }
-.shape-suv .carShape::before { left: 12px; right: 10px; height: 32px; border-radius: 18px 22px 12px 12px; }
-.shape-truck .carShape::before { left: 10px; right: 8px; height: 24px; border-radius: 12px 8px 12px 12px; clip-path: polygon(0 28%, 42% 28%, 48% 0, 70% 0, 76% 28%, 100% 28%, 100% 100%, 0 100%); }
-.shape-wagon .carShape::before { left: 12px; right: 10px; height: 24px; border-radius: 26px 18px 12px 12px; transform: skewX(-4deg); }
-.shape-van .carShape::before { left: 10px; right: 8px; height: 34px; border-radius: 18px 24px 12px 12px; }
-.miniVehicle .carShape { transform: scale(.56); transform-origin: bottom right; right: 10px; bottom: 10px; }
+.shape-coupe .carShape::before {
+  left: 12px;
+  right: 13px;
+  height: 28px;
+  clip-path: polygon(0 62%, 16% 43%, 38% 22%, 66% 24%, 78% 43%, 96% 47%, 100% 60%, 96% 100%, 5% 100%);
+  border-radius: 60px 66px 15px 15px;
+}
+.shape-suv .carShape::before {
+  height: 36px;
+  clip-path: polygon(0 48%, 12% 25%, 58% 22%, 76% 39%, 96% 42%, 100% 56%, 97% 100%, 4% 100%);
+  border-radius: 28px 34px 14px 14px;
+}
+.shape-truck .carShape::before {
+  height: 32px;
+  clip-path: polygon(0 58%, 10% 36%, 43% 36%, 49% 10%, 67% 10%, 75% 36%, 100% 36%, 100% 100%, 0 100%);
+  border-radius: 13px 12px 14px 14px;
+}
+.shape-wagon .carShape::before {
+  height: 31px;
+  clip-path: polygon(0 55%, 12% 35%, 30% 21%, 76% 22%, 91% 42%, 100% 55%, 96% 100%, 4% 100%);
+  border-radius: 38px 28px 14px 14px;
+}
+.shape-van .carShape::before {
+  height: 38px;
+  clip-path: polygon(0 50%, 9% 23%, 74% 23%, 93% 42%, 100% 56%, 96% 100%, 4% 100%);
+  border-radius: 28px 34px 14px 14px;
+}
+.miniVehicle .carShape { transform: scale(.52); transform-origin: bottom right; right: 8px; bottom: 8px; }
 .shapePicker {
   border: 1px solid var(--line);
   min-width: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 12px;
   margin: 10px 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
+  background: rgba(9, 10, 12, .18);
 }
 .shapePicker legend {
-  padding: 0 6px;
+  padding: 0 8px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
 }
 .shapePicker label { margin: 0; }
 .shapePicker input { position: absolute; opacity: 0; pointer-events: none; }
 .shapePreview {
-  min-height: 62px;
+  min-height: 78px;
   position: relative;
   display: flex;
   align-items: end;
   justify-content: center;
-  padding: 8px 4px;
+  padding: 10px 6px 11px;
   border: 1px solid var(--line);
-  border-radius: 13px;
-  background: var(--panel-2);
+  border-radius: 15px;
+  background: linear-gradient(180deg, rgba(34, 40, 50, .78), rgba(18, 21, 26, .96));
   color: var(--muted);
   text-transform: capitalize;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
 }
 .shapePreview .carShape {
   right: 50%;
-  bottom: 24px;
-  transform: translateX(50%) scale(.42);
+  bottom: 27px;
+  transform: translateX(50%) scale(.48);
   transform-origin: bottom center;
-  color: rgba(255,255,255,.72);
+  color: rgba(245, 245, 242, .72);
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .35));
 }
 .shapePicker input:checked + .shapePreview {
-  border-color: rgba(255,106,42,.75);
+  border-color: rgba(255,106,42,.8);
   color: var(--text);
-  background: rgba(255,106,42,.12);
+  background: linear-gradient(180deg, rgba(255,106,42,.18), rgba(48, 24, 17, .88));
 }
 .shapePicker input:checked + .shapePreview .carShape { color: var(--orange); }
 
@@ -629,14 +661,100 @@ textarea { min-height: 98px; resize: vertical; }
   font-size: 10px;
   font-weight: 900;
 }
-.tabbar span {
+.navIcon {
+  width: 24px;
+  height: 24px;
   display: block;
-  font-size: 19px;
-  line-height: 1.1;
+  margin: 0 auto 3px;
+  position: relative;
+  color: currentColor;
+}
+.navIcon::before, .navIcon::after {
+  content: "";
+  position: absolute;
+  display: block;
+}
+.navIcon-home::before {
+  width: 13px;
+  height: 13px;
+  left: 5px;
+  top: 7px;
+  border: 2px solid currentColor;
+  border-top: 0;
+  border-radius: 2px 2px 5px 5px;
+}
+.navIcon-home::after {
+  width: 13px;
+  height: 13px;
+  left: 5px;
+  top: 2px;
+  border-left: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.navIcon-garage::before {
+  inset: 4px 3px 3px;
+  border: 2px solid currentColor;
+  border-radius: 4px 4px 2px 2px;
+}
+.navIcon-garage::after {
+  left: 8px;
+  right: 8px;
+  bottom: 5px;
+  height: 10px;
+  border: 2px solid currentColor;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 4px 0 -2px currentColor;
+}
+.navIcon-history::before {
+  inset: 4px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.navIcon-history::after {
+  left: 11px;
+  top: 7px;
+  width: 6px;
+  height: 7px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  border-radius: 0 0 0 2px;
+}
+.navIcon-stats::before {
+  left: 5px;
+  bottom: 4px;
+  width: 4px;
+  height: 9px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: 6px -5px 0 currentColor, 12px -1px 0 currentColor;
+}
+.navIcon-stats::after {
+  left: 4px;
+  right: 4px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 99px;
+  background: currentColor;
+  opacity: .35;
+}
+.navIcon-more::before {
+  left: 4px;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 8px 0 0 currentColor, 16px 0 0 currentColor;
 }
 .tabbar .active {
   color: var(--orange);
   background: rgba(255, 106, 42, .11);
+}
+.tabbar .active .navIcon {
+  transform: translateY(-1px);
 }
 
 .desktopPanel {
