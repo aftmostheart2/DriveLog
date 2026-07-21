@@ -216,73 +216,24 @@ p, small {
 
 
 
-.carShape {
+.vehicleArt em {
   position: absolute;
-  right: 18px;
-  bottom: 16px;
-  width: 132px;
-  height: 54px;
-  color: rgba(255, 255, 255, .86);
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .38));
+  right: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 999px;
+  background: rgba(9, 10, 12, .34);
+  color: rgba(255, 255, 255, .82);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: capitalize;
+  backdrop-filter: blur(10px);
 }
-.carShape::before, .carShape::after {
-  content: "";
-  position: absolute;
-  display: block;
-}
-.carShape::before {
-  left: 8px;
-  right: 8px;
-  bottom: 13px;
-  height: 31px;
-  background:
-    linear-gradient(115deg, transparent 0 24%, rgba(9, 10, 12, .52) 24% 39%, transparent 39% 100%),
-    currentColor;
-  border-radius: 46px 54px 15px 15px;
-  clip-path: polygon(0 55%, 12% 38%, 30% 18%, 64% 18%, 78% 39%, 96% 43%, 100% 57%, 96% 100%, 4% 100%);
-}
-.carShape::after {
-  left: 28px;
-  bottom: 4px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #07080a;
-  box-shadow:
-    62px 0 0 #07080a,
-    0 0 0 4px currentColor,
-    62px 0 0 4px currentColor,
-    0 0 0 6px rgba(7, 8, 10, .28),
-    62px 0 0 6px rgba(7, 8, 10, .28);
-}
-.shape-coupe .carShape::before {
-  left: 12px;
-  right: 13px;
-  height: 28px;
-  clip-path: polygon(0 62%, 16% 43%, 38% 22%, 66% 24%, 78% 43%, 96% 47%, 100% 60%, 96% 100%, 5% 100%);
-  border-radius: 60px 66px 15px 15px;
-}
-.shape-suv .carShape::before {
-  height: 36px;
-  clip-path: polygon(0 48%, 12% 25%, 58% 22%, 76% 39%, 96% 42%, 100% 56%, 97% 100%, 4% 100%);
-  border-radius: 28px 34px 14px 14px;
-}
-.shape-truck .carShape::before {
-  height: 32px;
-  clip-path: polygon(0 58%, 10% 36%, 43% 36%, 49% 10%, 67% 10%, 75% 36%, 100% 36%, 100% 100%, 0 100%);
-  border-radius: 13px 12px 14px 14px;
-}
-.shape-wagon .carShape::before {
-  height: 31px;
-  clip-path: polygon(0 55%, 12% 35%, 30% 21%, 76% 22%, 91% 42%, 100% 55%, 96% 100%, 4% 100%);
-  border-radius: 38px 28px 14px 14px;
-}
-.shape-van .carShape::before {
-  height: 38px;
-  clip-path: polygon(0 50%, 9% 23%, 74% 23%, 93% 42%, 100% 56%, 96% 100%, 4% 100%);
-  border-radius: 28px 34px 14px 14px;
-}
-.miniVehicle .carShape { transform: scale(.52); transform-origin: bottom right; right: 8px; bottom: 8px; }
 .shapePicker {
   border: 1px solid var(--line);
   min-width: 0;
@@ -290,7 +241,7 @@ p, small {
   padding: 12px;
   margin: 10px 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   background: rgba(9, 10, 12, .18);
 }
@@ -303,35 +254,35 @@ p, small {
 .shapePicker label { margin: 0; }
 .shapePicker input { position: absolute; opacity: 0; pointer-events: none; }
 .shapePreview {
-  min-height: 78px;
-  position: relative;
+  min-height: 68px;
   display: flex;
-  align-items: end;
+  flex-direction: column;
   justify-content: center;
-  padding: 10px 6px 11px;
+  gap: 4px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 15px;
   background: linear-gradient(180deg, rgba(34, 40, 50, .78), rgba(18, 21, 26, .96));
-  color: var(--muted);
-  text-transform: capitalize;
-  font-size: 11px;
-  font-weight: 900;
+  color: var(--text);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
 }
-.shapePreview .carShape {
-  right: 50%;
-  bottom: 27px;
-  transform: translateX(50%) scale(.48);
-  transform-origin: bottom center;
-  color: rgba(245, 245, 242, .72);
-  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .35));
+.shapePreview strong {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+.shapePreview small {
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
 }
 .shapePicker input:checked + .shapePreview {
   border-color: rgba(255,106,42,.8);
-  color: var(--text);
   background: linear-gradient(180deg, rgba(255,106,42,.18), rgba(48, 24, 17, .88));
 }
-.shapePicker input:checked + .shapePreview .carShape { color: var(--orange); }
+.shapePicker input:checked + .shapePreview strong { color: var(--orange); }
+.shapePicker input:checked + .shapePreview small { color: rgba(255, 255, 255, .76); }
 
 .vehicleArt span {
   color: rgba(255,255,255,.7);
@@ -939,7 +890,6 @@ textarea { min-height: 98px; resize: vertical; }
 }
 
 @media (max-width: 390px) {
-  .shapePicker { grid-template-columns: repeat(2, 1fr); }
   .content { padding-inline: max(16px, env(safe-area-inset-left)); }
   h1 { font-size: 25px; }
   .tabbar button { font-size: 9px; }
