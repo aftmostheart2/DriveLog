@@ -1,6 +1,8 @@
 import { supabase } from "./client";
 import type { CarKeepTable, Json } from "./types";
 
+export const carKeepTables: CarKeepTable[] = ["vehicles", "services", "reminders", "parts", "projects", "wishlist_items", "fuel_entries"];
+
 function isMissingTableError(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const message = "message" in error ? String((error as { message?: unknown }).message ?? "") : "";
@@ -70,6 +72,24 @@ export async function hardDeleteRecord(table: CarKeepTable, id: string) {
   return { error: error && isMissingTableError(error) ? null : error };
 }
 
+export async function deleteCloudTableData(table: CarKeepTable) {
+  if (!supabase) return { error: null };
+  const userId = await getCurrentUserId();
+  if (!userId) return { error: new Error("Sign in before clearing cloud data.") };
+  const { error } = await supabase
+    .from(table)
+    .delete()
+    .eq("user_id", userId);
+  return { error: error && isMissingTableError(error) ? null : error };
+}
+
+export async function deleteAllCloudData() {
+  for (const table of carKeepTables) {
+    const { error } = await deleteCloudTableData(table);
+    if (error) return { error };
+  }
+  return { error: null };
+}
 
 export async function deleteCloudVehicleData(vehicleId: string) {
   if (!supabase) return { error: null };
