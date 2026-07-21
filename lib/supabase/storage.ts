@@ -48,11 +48,26 @@ export async function upsertRecord(table: CarKeepTable, payload: { id: string; v
 
 export async function softDeleteRecord(table: CarKeepTable, id: string) {
   if (!supabase) return { error: null };
+  const userId = await getCurrentUserId();
+  if (!userId) return { error: new Error("Sign in before deleting cloud data.") };
   const { error } = await supabase
     .from(table)
     .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
     .eq("id", id);
-  return { error };
+  return { error: error && isMissingTableError(error) ? null : error };
+}
+
+export async function hardDeleteRecord(table: CarKeepTable, id: string) {
+  if (!supabase) return { error: null };
+  const userId = await getCurrentUserId();
+  if (!userId) return { error: new Error("Sign in before deleting cloud data.") };
+  const { error } = await supabase
+    .from(table)
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", id);
+  return { error: error && isMissingTableError(error) ? null : error };
 }
 
 
