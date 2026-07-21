@@ -63,6 +63,25 @@ git remote add origin https://github.com/YOUR_USERNAME/CarKeep.git
 git push -u origin main
 ```
 
+
+## Supabase Setup
+
+CarKeep includes Supabase Auth and a starter sync layer. Local browser storage still works when Supabase is not configured.
+
+1. Create a Supabase project.
+2. Open the Supabase SQL Editor and run `supabase/schema.sql`.
+3. In Supabase Authentication, enable Email login. Magic-link login is supported by the app.
+4. Add these environment variables locally and in Vercel:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+5. Deploy, sign in from Settings, then use "Sync to Supabase".
+
+The schema uses Supabase Auth user IDs and row-level security, so users can only read and modify their own CarKeep records.
+
 ## Future TestFlight Path
 
 There are three reasonable ways to turn this into an iPhone app:

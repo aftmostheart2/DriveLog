@@ -648,3 +648,20 @@ textarea { min-height: 98px; resize: vertical; }
   .garageCard { grid-template-columns: 1fr; }
   .garageCard div:last-child { padding: 14px; }
 }
+.accountBox {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.accountBox button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 13px;
+  padding: 0 14px;
+  font-weight: 800;
+}
+.accountBox strong {
+  display: block;
+  color: var(--text);
+}
