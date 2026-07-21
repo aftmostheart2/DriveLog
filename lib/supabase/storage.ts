@@ -22,6 +22,8 @@ export async function listRecords<T>(table: CarKeepTable) {
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
+  if (error && isMissingTableError(error)) return { data: [] as T[], error: null };
+
   return {
     data: (data ?? []).map((row) => row.payload as T),
     error,
