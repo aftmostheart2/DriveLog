@@ -45,3 +45,28 @@ export async function softDeleteRecord(table: CarKeepTable, id: string) {
     .eq("id", id);
   return { error };
 }
+
+
+export async function deleteCloudVehicleData(vehicleId: string) {
+  if (!supabase) return { error: null };
+  const userId = await getCurrentUserId();
+  if (!userId) return { error: new Error("Sign in before clearing cloud data.") };
+
+  const relatedTables: CarKeepTable[] = ["services", "reminders", "parts", "projects", "wishlist_items"];
+  for (const table of relatedTables) {
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq("user_id", userId)
+      .eq("vehicle_id", vehicleId);
+    if (error) return { error };
+  }
+
+  const { error } = await supabase
+    .from("vehicles")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", vehicleId);
+
+  return { error };
+}

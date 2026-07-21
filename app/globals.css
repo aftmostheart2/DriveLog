@@ -978,3 +978,13 @@ textarea { min-height: 98px; resize: vertical; }
 @media (max-width: 380px) {
   .authActions { grid-template-columns: 1fr; }
 }
+
+.dangerInline {
+  border-color: rgba(255, 93, 93, .35) !important;
+  color: var(--red) !important;
+  background: rgba(255, 93, 93, .09) !important;
+}
+.dangerInline:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
