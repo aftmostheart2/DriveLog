@@ -1,6 +1,13 @@
 import { supabase } from "./client";
 import type { CarKeepTable, Json } from "./types";
 
+function isMissingTableError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const message = "message" in error ? String((error as { message?: unknown }).message ?? "") : "";
+  const code = "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+  return code === "42P01" || /schema cache|does not exist|could not find the table/i.test(message);
+}
+
 export async function getCurrentUserId() {
   if (!supabase) return null;
   const { data } = await supabase.auth.getUser();
@@ -59,7 +66,7 @@ export async function deleteCloudVehicleData(vehicleId: string) {
       .delete()
       .eq("user_id", userId)
       .eq("vehicle_id", vehicleId);
-    if (error) return { error };
+    if (error && !isMissingTableError(error)) return { error };
   }
 
   const { error } = await supabase
