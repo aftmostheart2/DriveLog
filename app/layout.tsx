@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DriveLog - Vehicle Maintenance Prototype",
+  title: "CarKeep - Vehicle Maintenance",
   description:
-    "A polished mobile-first prototype for tracking vehicle maintenance, parts, projects, reminders, and ownership analytics.",
+    "A clean vehicle maintenance app for tracking service history, parts, reminders, projects, and ownership cost.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

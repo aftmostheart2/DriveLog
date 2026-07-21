@@ -1,8 +1,6 @@
-# DriveLog
+# CarKeep
 
-DriveLog is a mobile-first vehicle maintenance app prototype. It is designed as
-a polished UI mockup today, with a code shape that can later grow into a real
-iPhone app for TestFlight and App Store distribution.
+CarKeep is a mobile-first vehicle maintenance app for tracking service records, parts, projects, reminders, and ownership cost. The current web app runs locally in the browser and is structured so it can later grow into a real iPhone app for TestFlight and App Store distribution.
 
 ## What Is Included
 
@@ -20,11 +18,10 @@ iPhone app for TestFlight and App Store distribution.
 - Maintenance reminders.
 - Settings and JSON backup export.
 
-## Current Prototype Storage
+## Current Storage
 
 The UI uses a small repository boundary in `app/page.tsx` instead of scattering
-storage calls through the components. For now it persists demo changes in
-browser storage so the prototype stays simple and offline.
+storage calls through the components. For now it persists your records in browser storage so the app stays simple and offline.
 
 For a production iOS app, replace that boundary with:
 
@@ -60,9 +57,9 @@ Create a GitHub repository, then push:
 ```bash
 git init
 git add .
-git commit -m "Build DriveLog prototype"
+git commit -m "Build CarKeep app"
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/DriveLog.git
+git remote add origin https://github.com/YOUR_USERNAME/CarKeep.git
 git push -u origin main
 ```
 
@@ -92,7 +89,7 @@ for TestFlight.
 
 ## Production Notes
 
-Before using DriveLog for real records, add:
+Before using CarKeep for real records, add:
 
 - Account login.
 - Cloud backup and restore.
