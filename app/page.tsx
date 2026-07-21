@@ -20,6 +20,34 @@ const STORAGE_KEY = "carkeep.v1";
 const uid = () => typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
 const money = (n: number) => Number.isFinite(n) ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "$0";
 const serviceTotal = (service: Service) => service.partsCost + service.laborCost;
+const backupName = () => `carkeep-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+async function saveBackupToFile(data: AppData) {
+  const payload = JSON.stringify({ exportedAt: new Date().toISOString(), app: "CarKeep", version: 1, data }, null, 2);
+  const blob = new Blob([payload], { type: "application/json" });
+  const picker = (typeof window !== "undefined" ? (window as unknown as { showSaveFilePicker?: (options: unknown) => Promise<{ createWritable: () => Promise<{ write: (blob: Blob) => Promise<void>; close: () => Promise<void> }> }> }).showSaveFilePicker : undefined);
+  if (picker) {
+    try {
+      const handle = await picker({ suggestedName: backupName(), types: [{ description: "CarKeep JSON backup", accept: { "application/json": [".json"] } }] });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return "Backup saved";
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return "Backup canceled";
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = backupName();
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  return "Backup file created";
+}
 
 const repository = {
   load(): AppData {
@@ -51,8 +79,15 @@ export default function Home() {
   const [projectDetail, setProjectDetail] = useState<string | null>(null);
   const [toast, setToast] = useState("");
   const [account, setAccount] = useState<AccountState>({ email: "", signedIn: false, message: "" });
+  const [installState, setInstallState] = useState({ ready: false, needsInstall: false });
 
   useEffect(() => { const saved = repository.load(); setData(saved); setVehicleId(saved.vehicles[0]?.id ?? ""); setHasLoaded(true); }, []);
+  useEffect(() => {
+    const navLike = navigator as Navigator & { standalone?: boolean; maxTouchPoints?: number };
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean(navLike.standalone);
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && Number(navLike.maxTouchPoints ?? 0) > 1);
+    setInstallState({ ready: true, needsInstall: ios && !standalone });
+  }, []);
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: authData }) => {
@@ -87,6 +122,10 @@ export default function Home() {
     if (!supabase) return;
     await supabase.auth.signOut();
     setAccount({ email: "", signedIn: false, message: "Signed out." });
+  }
+  async function exportBackup() {
+    const message = await saveBackupToFile(data);
+    setToast(message);
   }
   async function syncToSupabase() {
     if (!supabase || !account.signedIn) return setToast("Sign in before syncing");
@@ -134,16 +173,18 @@ export default function Home() {
     if (screen === "projects") return <Projects data={data} openDetail={setProjectDetail} onAdd={() => setModal("project")} />;
     if (screen === "wishlist") return <Wishlist data={data} setData={setData} onAdd={() => setModal("wishlist")} />;
     if (screen === "reminders") return <Reminders data={data} onAdd={() => setModal("reminder")} />;
-    if (screen === "settings") return <Settings data={data} account={account} onSignIn={signInWithEmail} onSignOut={signOut} onSync={syncToSupabase} onBackup={() => setModal("backup")} onClear={() => { repository.clear(); setData(emptyData); setVehicleId(""); setToast("Local data cleared"); }} />;
+    if (screen === "settings") return <Settings data={data} account={account} onSignIn={signInWithEmail} onSignOut={signOut} onSync={syncToSupabase} onBackup={exportBackup} onClear={() => { repository.clear(); setData(emptyData); setVehicleId(""); setToast("Local data cleared"); }} />;
     if (screen === "more") return <More setScreen={setScreen} />;
     return <Dashboard data={data} vehicle={vehicle} allSpend={allSpend} vehicleSpend={vehicleSpend} setScreen={setScreen} setVehicleId={setVehicleId} onQuickAdd={() => setModal("service")} onAddVehicle={() => setModal("vehicle")} />;
   }, [screen, hasVehicles, vehicles, vehicle, services, data, filteredServices, query, allSpend, vehicleSpend, account]);
 
   const activeNav = ["parts", "projects", "wishlist", "reminders", "settings"].includes(screen) ? "more" : screen;
+  if (installState.ready && installState.needsInstall) return <InstallGate />;
   return <main className="shell"><section className="appSurface" aria-label="CarKeep vehicle maintenance app"><div className="content"><div className="topbar"><div><p className="eyebrow">CarKeep</p><h1>{screen === "dashboard" ? "Garage" : titleFor(screen)}</h1></div></div>{page}</div><nav className="tabbar" aria-label="Primary navigation">{nav.map(([key, label, iconName]) => <button key={key} className={activeNav === key ? "active" : ""} onClick={() => setScreen(key)} aria-label={label}><span className={`navIcon navIcon-${iconName}`} aria-hidden="true" />{label}</button>)}</nav></section><aside className="desktopPanel"><p className="eyebrow">CarKeep</p><h2>Know what your car costs before it surprises you.</h2><p>Track service history, parts, projects, reminders, and ownership cost from one clean maintenance record.</p><div className="metrics"><strong>{vehicles.length}</strong><span>Vehicles</span><strong>{data.services.length}</strong><span>Services</span><strong>{activeProjects.length}</strong><span>Active projects</span></div></aside>{projectDetail && <ProjectDetail project={data.projects.find((project) => project.id === projectDetail)!} data={data} onClose={() => setProjectDetail(null)} onComplete={completeProject} />}{modal && <EntryModal type={modal} vehicles={vehicles} projects={data.projects} onClose={() => setModal(null)} onSubmit={submitModal} data={data} />}{toast && <button className="toast" onAnimationEnd={() => setToast("")}>{toast}</button>}</main>;
 }
 
 function titleFor(screen: string) { return ({ garage: "Garage", vehicle: "Vehicle", history: "History", analytics: "Stats", more: "More", parts: "Parts", projects: "Projects", wishlist: "Wishlist", reminders: "Reminders", settings: "Settings" } as Record<string, string>)[screen] ?? "CarKeep"; }
+function InstallGate() { return <main className="installShell"><section className="installCard"><p className="eyebrow">Install CarKeep</p><h1>Add it to your Home Screen first</h1><p>CarKeep works best as a Home Screen app. It gets the full-screen layout, avoids Safari tab chrome, and keeps your local records tied to the installed app.</p><ol><li>Tap the Share button in Safari.</li><li>Choose Add to Home Screen.</li><li>Tap Add, then open CarKeep from the new icon.</li></ol><p className="fine">After it opens from your Home Screen, you can add vehicles and save JSON backups to Files from Settings.</p></section></main>; }
 function StartScreen({ onAddVehicle }: { onAddVehicle: () => void }) { return <div className="stack"><div className="emptyHero"><p className="eyebrow">Start clean</p><h2>Add your first vehicle</h2><p>CarKeep starts empty so your maintenance log belongs to you from the first record.</p><button className="primary" onClick={onAddVehicle}>Add vehicle</button></div><div className="setupList"><span>1. Add vehicle details</span><span>2. Log service history</span><span>3. Track parts, reminders, and projects</span></div></div>; }
 function VehicleArt({ vehicle }: { vehicle: Vehicle }) { const background = "linear-gradient(135deg, " + vehicle.color + ", #1b1f25)"; const shape = vehicle.shape ?? "sedan"; return <div className={`vehicleArt shape-${shape}`} style={{ background }}><span>{vehicle.year || "Vehicle"}</span><strong>{vehicle.make} {vehicle.model}</strong><i className="carShape" aria-hidden="true" /></div>; }
 function Dashboard({ data, vehicle, allSpend, vehicleSpend, setScreen, setVehicleId, onQuickAdd, onAddVehicle }: { data: AppData; vehicle?: Vehicle; allSpend: number; vehicleSpend: number; setScreen: (screen: string) => void; setVehicleId: (id: string) => void; onQuickAdd: () => void; onAddVehicle: () => void }) { const recent = data.services.slice().sort((a, b) => b.date.localeCompare(a.date))[0]; if (!vehicle) return <StartScreen onAddVehicle={onAddVehicle} />; const costPerMile = vehicle.mileage > 0 ? vehicleSpend / vehicle.mileage : 0; return <div className="stack"><div className="heroCard"><VehicleArt vehicle={vehicle} /><div className="heroInfo"><span className="badge good">Selected vehicle</span><h2>{vehicle.nickname}</h2><p>{vehicle.mileage.toLocaleString()} mi {vehicle.vin ? "· " + vehicle.vin : ""}</p></div></div><div className="grid3"><Stat label="Fleet spend" value={money(allSpend)} tone="orange" /><Stat label="This vehicle" value={money(vehicleSpend)} /><Stat label="Cost / mi" value={`$${costPerMile.toFixed(2)}`} /></div><div className="quickActions"><button onClick={onQuickAdd}>Log service</button><button onClick={() => setScreen("parts")}>Add parts</button><button onClick={onAddVehicle}>Add vehicle</button></div><Section title="Vehicles"><div className="vehicleRail">{data.vehicles.map((item) => <button key={item.id} onClick={() => { setVehicleId(item.id); setScreen("vehicle"); }} className="miniVehicle"><VehicleArt vehicle={item} /><strong>{item.nickname}</strong><span>{item.mileage.toLocaleString()} mi</span></button>)}</div></Section><Section title="Recent service">{recent ? <ServiceCard service={recent} vehicle={data.vehicles.find((item) => item.id === recent.vehicleId)!} /> : <EmptyState title="No service logged yet" text="Add oil changes, repairs, inspections, receipts, and notes as they happen." action="Log service" onAction={onQuickAdd} />}</Section></div>; }
@@ -162,7 +203,7 @@ function Settings({ data, account, onSignIn, onSignOut, onSync, onBackup, onClea
 }
 function More({ setScreen }: { setScreen: (screen: string) => void }) { return <div className="moreGrid">{moreScreens.map(([key, title, sub]) => <button key={key} onClick={() => setScreen(key)}><strong>{title}</strong><span>{sub}</span></button>)}</div>; }
 function ProjectDetail({ project, data, onClose, onComplete }: { project: Project; data: AppData; onClose: () => void; onComplete: (project: Project) => void }) { const vehicle = data.vehicles.find((item) => item.id === project.vehicleId)!; const parts = data.parts.filter((part) => part.projectId === project.id); return <div className="overlay" role="dialog" aria-modal="true"><div className="sheet"><button className="close" onClick={onClose}>×</button><span className={`badge ${project.priority.toLowerCase()}`}>{project.priority}</span><h2>{project.name}</h2><p>{vehicle.nickname} · {project.status}</p><Progress project={project} /><p>{project.description}</p><div className="checklist">{project.tasks.length ? project.tasks.map((task) => <label key={task.label}><input type="checkbox" checked={task.done} readOnly /> {task.label}</label>) : <p>No checklist tasks yet.</p>}</div><Section title="Linked purchased parts">{parts.length ? parts.map((part) => <PartCard key={part.id} part={part} vehicle={vehicle} />) : <EmptyState title="No linked parts" text="Purchased parts linked to this project will appear here." />}</Section><button className="primary" onClick={() => onComplete(project)}>Convert project to service entry</button></div></div>; }
-function EntryModal({ type, vehicles, projects, onClose, onSubmit, data }: { type: ModalType; vehicles: Vehicle[]; projects: Project[]; onClose: () => void; onSubmit: (form: FormData) => void; data: AppData }) { if (type === "backup") return <div className="overlay" role="dialog" aria-modal="true"><div className="sheet"><button className="close" onClick={onClose}>×</button><h2>Backup export</h2><textarea readOnly value={JSON.stringify(data, null, 2)} /><p className="fine">Save this JSON somewhere safe until cloud sync is connected.</p></div></div>; return <div className="overlay" role="dialog" aria-modal="true"><form className="sheet" onSubmit={(event) => { event.preventDefault(); onSubmit(new FormData(event.currentTarget)); }}><button type="button" className="close" onClick={onClose}>×</button><h2>{modalTitle(type)}</h2>{type !== "vehicle" && <VehicleSelect vehicles={vehicles} />}{type === "vehicle" && <VehicleFields />}{type === "service" && <ServiceFields vehicle={vehicles[0]} />}{type === "part" && <PartFields projects={projects} />}{type === "project" && <ProjectFields />}{type === "reminder" && <ReminderFields />}{type === "wishlist" && <WishlistFields />}<button className="primary">Save</button></form></div>; }
+function EntryModal({ type, vehicles, projects, onClose, onSubmit, data }: { type: ModalType; vehicles: Vehicle[]; projects: Project[]; onClose: () => void; onSubmit: (form: FormData) => void; data: AppData }) { if (type === "backup") return <div className="overlay" role="dialog" aria-modal="true"><div className="sheet"><button className="close" onClick={onClose}>×</button><h2>Backup export</h2><textarea readOnly value={JSON.stringify(data, null, 2)} /><p className="fine">Use Settings to save this as a JSON file. Keep it somewhere safe until cloud sync is connected.</p></div></div>; return <div className="overlay" role="dialog" aria-modal="true"><form className="sheet" onSubmit={(event) => { event.preventDefault(); onSubmit(new FormData(event.currentTarget)); }}><button type="button" className="close" onClick={onClose}>×</button><h2>{modalTitle(type)}</h2>{type !== "vehicle" && <VehicleSelect vehicles={vehicles} />}{type === "vehicle" && <VehicleFields />}{type === "service" && <ServiceFields vehicle={vehicles[0]} />}{type === "part" && <PartFields projects={projects} />}{type === "project" && <ProjectFields />}{type === "reminder" && <ReminderFields />}{type === "wishlist" && <WishlistFields />}<button className="primary">Save</button></form></div>; }
 function modalTitle(type: ModalType) { return ({ vehicle: "Add vehicle", service: "Log service", part: "Add purchased part", project: "Create project", reminder: "Add reminder", wishlist: "Add wishlist item", backup: "Backup export" })[type]; }
 function VehicleSelect({ vehicles }: { vehicles: Vehicle[] }) { return <label>Vehicle<select name="vehicleId">{vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname}</option>)}</select></label>; }
 function VehicleFields() { const shapes: VehicleShape[] = ["sedan", "coupe", "suv", "truck", "wagon", "van"]; return <><div className="formGrid"><label>Year<input name="year" type="number" placeholder="2018" /></label><label>Mileage<input name="mileage" type="number" placeholder="85000" /></label></div><label>Make<input name="make" required placeholder="Toyota" /></label><label>Model<input name="model" required placeholder="Tacoma" /></label><label>Trim<input name="trim" placeholder="TRD Off-Road" /></label><label>Nickname<input name="nickname" placeholder="Daily, weekend car, truck..." /></label><label>VIN<input name="vin" placeholder="Optional" /></label><label>License plate<input name="plate" placeholder="Optional" /></label><label>Color<input name="color" type="color" defaultValue="#ff6a2a" /></label><fieldset className="shapePicker"><legend>Car shape</legend>{shapes.map((shape) => <label key={shape}><input type="radio" name="shape" value={shape} defaultChecked={shape === "sedan"} /><span className={`shapePreview shape-${shape}`}><i className="carShape" />{shape}</span></label>)}</fieldset><label>Notes<textarea name="notes" placeholder="Anything worth remembering about this vehicle" /></label></>; }

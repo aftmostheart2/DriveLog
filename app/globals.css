@@ -18,10 +18,12 @@
 }
 
 * { box-sizing: border-box; }
-html { color-scheme: dark; overflow-x: hidden; touch-action: manipulation; }
+html { height: 100%; color-scheme: dark; overflow: hidden; touch-action: manipulation; }
 body {
   margin: 0;
-  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   overscroll-behavior: none;
   min-height: 100vh;
   background:
@@ -46,6 +48,64 @@ button {
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--orange);
   outline-offset: 2px;
+}
+
+
+.installShell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: max(22px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 78% 10%, rgba(255, 106, 42, .22), transparent 34%),
+    linear-gradient(145deg, #090a0c, #11151b);
+}
+.installCard {
+  width: min(430px, 100%);
+  border: 1px solid rgba(255, 106, 42, .34);
+  border-radius: 26px;
+  padding: 26px;
+  background: linear-gradient(145deg, rgba(25, 29, 35, .98), rgba(9, 10, 12, .98));
+  box-shadow: var(--shadow);
+}
+.installCard h1 {
+  font-size: 32px;
+  line-height: 1.02;
+  margin: 0 0 12px;
+}
+.installCard ol {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.installCard li {
+  counter-increment: step;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 12px;
+  background: rgba(18, 21, 26, .92);
+  color: var(--text);
+  font-weight: 800;
+}
+.installCard li::before {
+  content: counter(step);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #1d0d05;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .shell {
@@ -74,6 +134,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
+  overscroll-behavior: contain;
   background: var(--bg);
   padding: 22px 18px 30px;
 }
@@ -848,7 +909,8 @@ textarea { min-height: 98px; resize: vertical; }
   body {
     background: var(--bg);
   }
-  .shell {
+  
+.shell {
     min-height: 100dvh;
     display: block;
     padding: 0;
@@ -864,7 +926,7 @@ textarea { min-height: 98px; resize: vertical; }
     box-shadow: none;
   }
   .content {
-    height: calc(100dvh - 82px);
+    height: calc(100dvh - 82px - env(safe-area-inset-bottom));
     border-radius: 0;
     padding: max(22px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 38px max(20px, env(safe-area-inset-left));
   }
