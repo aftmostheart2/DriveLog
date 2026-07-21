@@ -207,22 +207,26 @@ p, small {
 
 .vehicleArt {
   min-height: 128px;
-  display: flex;
-  flex-direction: column;
-  justify-content: end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "year style"
+    "name style";
+  align-content: end;
+  align-items: end;
+  column-gap: 12px;
+  row-gap: 5px;
   padding: 16px;
   position: relative;
 }
-
-
-
 .vehicleArt em {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
+  grid-area: style;
+  align-self: end;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 28px;
+  max-width: 112px;
   padding: 0 11px;
   border: 1px solid rgba(255, 255, 255, .22);
   border-radius: 999px;
@@ -232,6 +236,9 @@ p, small {
   font-style: normal;
   font-weight: 900;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   backdrop-filter: blur(10px);
 }
 .shapePicker {
@@ -285,14 +292,19 @@ p, small {
 .shapePicker input:checked + .shapePreview small { color: rgba(255, 255, 255, .76); }
 
 .vehicleArt span {
+  grid-area: year;
+  min-width: 0;
   color: rgba(255,255,255,.7);
   font-size: 12px;
   font-weight: 800;
 }
 
 .vehicleArt strong {
+  grid-area: name;
+  min-width: 0;
   font-size: 18px;
-  max-width: 70%;
+  line-height: 1.14;
+  overflow-wrap: anywhere;
 }
 
 .heroInfo {
@@ -435,7 +447,8 @@ p, small {
   background: var(--panel);
   border-radius: 16px;
 }
-.miniVehicle .vehicleArt { min-height: 78px; padding: 10px; }
+.miniVehicle .vehicleArt { min-height: 96px; padding: 10px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "year" "name" "style"; align-content: end; }
+.miniVehicle .vehicleArt em { justify-self: start; max-width: 100%; min-height: 24px; font-size: 10px; padding: 0 9px; }
 .miniVehicle strong, .miniVehicle span {
   display: block;
   padding: 0 10px;
