@@ -430,6 +430,23 @@ p, small {
   line-height: 1;
   margin-bottom: 0;
 }
+.emptyActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+.emptyActions button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 13px;
+  padding: 0 14px;
+  font-weight: 900;
+}
+.emptyActions .primary {
+  width: 100%;
+}
 .setupList {
   display: grid;
   gap: 8px;
