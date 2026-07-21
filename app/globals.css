@@ -896,25 +896,27 @@ textarea { min-height: 98px; resize: vertical; }
   }
 
   .shell {
+    width: 100vw;
     min-height: 100dvh;
-    grid-template-columns: minmax(0, 1080px);
-    gap: 24px;
+    grid-template-columns: 1fr;
+    gap: 0;
     align-items: stretch;
-    justify-content: center;
-    padding: 28px;
+    justify-content: stretch;
+    padding: 0;
+    background: var(--bg);
   }
 
   .appSurface {
-    width: 100%;
-    height: calc(100dvh - 56px);
+    width: 100vw;
+    height: 100dvh;
     min-height: 620px;
     display: grid;
-    grid-template-columns: 172px minmax(0, 1fr);
+    grid-template-columns: 184px minmax(0, 1fr);
     padding: 0;
-    border-radius: 28px;
-    background: rgba(12, 14, 17, .9);
-    border: 1px solid rgba(255, 255, 255, .08);
-    box-shadow: var(--shadow);
+    border-radius: 0;
+    background: rgba(12, 14, 17, .98);
+    border: 0;
+    box-shadow: none;
   }
 
   .content {
@@ -922,7 +924,7 @@ textarea { min-height: 98px; resize: vertical; }
     grid-row: 1;
     height: 100%;
     padding: 34px;
-    border-radius: 0 28px 28px 0;
+    border-radius: 0;
     border-left: 1px solid var(--line);
     background:
       radial-gradient(circle at 82% 0%, rgba(255, 106, 42, .08), transparent 28%),
@@ -950,7 +952,7 @@ textarea { min-height: 98px; resize: vertical; }
     padding: 24px 14px;
     border-top: 0;
     border-right: 1px solid var(--line);
-    border-radius: 28px 0 0 28px;
+    border-radius: 0;
     background: linear-gradient(180deg, rgba(18, 21, 26, .98), rgba(10, 11, 13, .98));
   }
 
@@ -987,17 +989,6 @@ textarea { min-height: 98px; resize: vertical; }
 
   .desktopPanel {
     display: none;
-    height: calc(100dvh - 56px);
-    align-self: stretch;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 28px;
-    border: 1px solid var(--line);
-    border-radius: 28px;
-    background:
-      radial-gradient(circle at 82% 8%, rgba(45, 212, 191, .10), transparent 30%),
-      rgba(18, 21, 26, .82);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
   }
 
   .desktopPanel h2 {
@@ -1119,16 +1110,6 @@ textarea { min-height: 98px; resize: vertical; }
 
   .shapePicker {
     grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1180px) {
-  .shell {
-    grid-template-columns: minmax(720px, 1080px) minmax(260px, 320px);
-  }
-
-  .desktopPanel {
-    display: flex;
   }
 }
 
